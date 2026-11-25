@@ -7,15 +7,15 @@
 <div class="layout"><section class="stage" aria-label="互動打擊區"><div class="stageHead"><div class="status" id="weaponStatus">目前武器：👊 拳頭</div><div class="status combo" id="comboDisplay">COMBO × 0</div></div><canvas id="game" width="800" height="900" aria-label="點擊或觸碰畫面，觸發卡通打擊效果及照片扭曲"></canvas><div class="hint" id="hint">👆 選擇武器並點擊照片，武器會飛入畫面擊中指定位置！</div></section>
 <aside class="side">
 <section class="panel"><h2>⚔️ 選擇武器</h2><div class="weaponGrid" id="weaponGrid"></div></section>
-<section class="panel"><h2>📸 換上主角照片</h2><div class="upload"><label for="camera" class="btn primary">📷 拍照</label><label for="gallery" class="btn">🖼️ 相簿</label></div><input id="camera" type="file" accept="image/*" capture="user"><input id="gallery" type="file" accept="image/*"><p class="small">照片依原始長寬比例完整置中顯示，不拉伸、不裁切臉部；空白區域自動留邊。照片只在本機處理，不會上傳。</p></section>
-<section class="panel toolsPanel"><h2>🎮 遊戲控制</h2><div class="score"><div class="stat"><b id="hits">0</b><span>累積打擊</span></div><div class="stat"><b id="bestCombo">0</b><span>最高連擊</span></div></div><div class="woundMeter"><div class="meterTop"><span id="injuryLabel">狀態：完好無傷</span><span id="injuryPct">0%</span></div><div class="meterTrack"><div id="injuryBar" class="meterBar"></div></div></div><div class="tools" style="margin-top:12px"><button type="button" class="btn" id="sound">🔊 音效開</button><button type="button" class="btn" id="reset">♻️ 恢復原狀</button><button type="button" class="btn" id="demo">🙂 預設人物</button><button type="button" class="btn" id="save">📸 保存畫面</button><button type="button" class="btn" id="nose">👃 指定鼻子位置</button><button type="button" class="btn" id="clearHits">🆕 新回合</button></div><p class="small">武器會以擬真材質的實體圖像揮擊、刺入或撞擊指定位置，並於接觸時播放音效與變形。傷痕持續累積，直到按「恢復原狀」。</p></section></aside></div>
+<section class="panel"><h2>📸 換上主角照片</h2><div class="upload"><label for="camera" class="btn primary">📷 拍照</label><label for="gallery" class="btn">🖼️ 相簿</label></div><input id="camera" type="file" accept="image/*" capture="user"><input id="gallery" type="file" accept="image/*"><p class="small">照片等比例完整顯示。上傳後自動辨識眼睛、眉毛、鼻子和嘴巴以校正表情特效（首次辨識需網路）。影像只在本機分析，不上傳照片。</p><div class="small" id="faceStatus" role="status" aria-live="polite">尚未載入人物照片</div></section>
+<section class="panel toolsPanel"><h2>🎮 遊戲控制</h2><div class="score"><div class="stat"><b id="hits">0</b><span>累積打擊</span></div><div class="stat"><b id="bestCombo">0</b><span>最高連擊</span></div></div><div class="woundMeter"><div class="meterTop"><span id="injuryLabel">狀態：完好無傷</span><span id="injuryPct">0%</span></div><div class="meterTrack"><div id="injuryBar" class="meterBar"></div></div></div><div class="tools" style="margin-top:12px"><button type="button" class="btn" id="sound">🔊 音效開</button><button type="button" class="btn" id="reset">♻️ 恢復原狀</button><button type="button" class="btn" id="demo">🙂 預設人物</button><button type="button" class="btn" id="save">📸 保存畫面</button><button type="button" class="btn" id="nose">👃 指定鼻子位置</button><button type="button" class="btn" id="clearHits">🆕 新回合</button></div><p class="small">武器會以擬真材質的實體圖像揮擊、刺入或撞擊指定位置，並於接觸時播放音效、局部凹陷、黑青、哀號、眼淚、後仰與生氣表情變化。傷痕持續累積，直到按「恢復原狀」。</p></section></aside></div>
 <div class="note">純屬惡搞的虛擬遊戲。使用他人照片請先徵得同意；切勿用於騷擾或霸凌。</div></main>
 <script>
 (()=>{'use strict';
 const c=document.getElementById('game'),ctx=c.getContext('2d',{alpha:false});const W=800,H=900;
-const els={grid:document.getElementById('weaponGrid'),status:document.getElementById('weaponStatus'),combo:document.getElementById('comboDisplay'),hits:document.getElementById('hits'),best:document.getElementById('bestCombo'),hint:document.getElementById('hint'),sound:document.getElementById('sound'),injuryBar:document.getElementById('injuryBar'),injuryLabel:document.getElementById('injuryLabel'),injuryPct:document.getElementById('injuryPct'),nose:document.getElementById('nose')};
+const els={grid:document.getElementById('weaponGrid'),status:document.getElementById('weaponStatus'),combo:document.getElementById('comboDisplay'),hits:document.getElementById('hits'),best:document.getElementById('bestCombo'),hint:document.getElementById('hint'),sound:document.getElementById('sound'),injuryBar:document.getElementById('injuryBar'),injuryLabel:document.getElementById('injuryLabel'),injuryPct:document.getElementById('injuryPct'),nose:document.getElementById('nose'),faceStatus:document.getElementById('faceStatus')};
 const weapons=[['👊','拳頭','punch'],['📍','針刺','needle'],['🏏','球棒','bat'],['🔥','火燒','fire'],['🔨','槌子','hammer'],['🥧','派餅','pie'],['💧','水球','water'],['⚡','閃電','zap'],['🪶','搔癢','tickle'],['💋','親親','kiss'],['🧊','冰塊','ice'],['💨','強風','wind']];
-let weapon=weapons[0],soundOn=true,hits=0,combo=0,best=0,lastHit=0,particles=[],marks=[],waves=[],deforms=[],shake=0,faceImg=null,avatar=null,audio=null,raf=null,lastFrame=0,attacks=[],injuries=[],lipPrints=[],injuryHits=0,nosePoint={x:400,y:505},nosePick=false;
+let weapon=weapons[0],soundOn=true,hits=0,combo=0,best=0,lastHit=0,particles=[],marks=[],waves=[],deforms=[],shake=0,faceImg=null,avatar=null,audio=null,raf=null,lastFrame=0,attacks=[],injuries=[],lipPrints=[],injuryHits=0,recoil=null,nosePoint={x:400,y:505},nosePick=false,detectedFace=null,faceModel=null,modelPromise=null,faceLoadSeq=0;
 const rnd=(a,b)=>a+Math.random()*(b-a);const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 weapons.forEach(w=>{const b=document.createElement('button');b.type='button';b.className='weapon'+(w===weapon?' active':'');b.innerHTML=`<span class="emoji">${w[0]}</span><span>${w[1]}</span>`;b.addEventListener('click',()=>{weapon=w;els.status.textContent=`目前武器：${w[0]} ${w[1]}`;els.grid.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));});els.grid.appendChild(b)});
 function makeAvatar(){const o=document.createElement('canvas');o.width=W;o.height=H;const q=o.getContext('2d');const grad=q.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#7589cb');grad.addColorStop(1,'#253458');q.fillStyle=grad;q.fillRect(0,0,W,H);
@@ -64,18 +64,124 @@ function deformed(){
  }return {dx,dy};});
 }
 function sound(type){if(!soundOn)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const t=audio.currentTime;const osc=audio.createOscillator(),gain=audio.createGain(),filter=audio.createBiquadFilter();osc.type=['fire','wind','water'].includes(type)?'triangle':'sawtooth';const f=type==='needle'?840:type==='zap'?520:type==='fire'?185:type==='kiss'?680:140;osc.frequency.setValueAtTime(f,t);osc.frequency.exponentialRampToValueAtTime(Math.max(48,f*.28),t+.19);filter.type='lowpass';filter.frequency.value=1400;gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.12,t+.012);gain.gain.exponentialRampToValueAtTime(.0001,t+.24);osc.connect(filter);filter.connect(gain);gain.connect(audio.destination);osc.start(t);osc.stop(t+.25)}catch(e){soundOn=false;els.sound.textContent='🔇 無音效'}}
-function updateInjury(){const level=clamp(injuryHits/35,0,1);const label=injuryHits===0?'完好無傷':injuryHits<5?'輕微瘀青':injuryHits<12?'局部紅腫':injuryHits<20?'明顯腫脹':injuryHits<30?'鼻血與瘀青':'滿臉傷痕';els.injuryLabel.textContent='狀態：'+label;els.injuryPct.textContent=Math.round(level*100)+'%';els.injuryBar.style.width=(level*100)+'%'}
-function addInjury(x,y,id){if(['kiss','tickle','water','wind'].includes(id))return;injuryHits++;injuries.push({x,y,kind:id,seed:Math.random(),size:id==='needle'?14:id==='fire'?53:id==='bat'||id==='hammer'?64:43,strength:id==='bat'||id==='hammer'?1.5:1});if(injuries.length>70)injuries.shift();updateInjury()}
+function updateInjury(){const level=clamp(injuryHits/35,0,1);const label=injuryHits===0?'完好無傷':injuryHits<5?'輕微黑青':injuryHits<12?'痛苦皺眉':injuryHits<20?'黑青腫脹':injuryHits<30?'鼻血暴怒':'滿臉瘀青凹陷';els.injuryLabel.textContent='狀態：'+label;els.injuryPct.textContent=Math.round(level*100)+'%';els.injuryBar.style.width=(level*100)+'%'}
+function addInjury(x,y,id){if(['kiss','tickle','water','wind'].includes(id))return;injuryHits++;injuries.push({x,y,kind:id,seed:Math.random(),size:id==='needle'?14:id==='fire'?53:id==='bat'||id==='hammer'?64:43,strength:id==='bat'||id==='hammer'?1.5:1,dent:id==='needle'?1.6:id==='bat'||id==='hammer'?1.25:id==='fire'?.55:1});if(injuries.length>70)injuries.shift();updateInjury()}
 function permanentWarp(){
  const active=injuries.filter(z=>!['ice','zap'].includes(z.kind));
  if(!active.length){imageBase();return;}
- const swell=clamp(injuryHits/25,0,1);
+ const severity=clamp(injuryHits/28,0,1);
  drawWarp(16,(x,y)=>{let dx=0,dy=0;
  for(const d of active){const rx=x-d.x,ry=y-d.y,dist=Math.hypot(rx,ry);
- if(dist>160)continue;
- const amt=Math.exp(-dist*dist/(2*57*57))*d.strength*(3+swell*10);
- dx+=rx/(dist+15)*amt;dy+=ry/(dist+15)*amt;
- }return {dx,dy};});
+ if(dist>170)continue;
+ const dirx=rx/(dist+14),diry=ry/(dist+14);
+ const dent=Math.exp(-dist*dist/(2*34*34))*d.dent*(7+severity*8);
+ const swell=Math.exp(-dist*dist/(2*74*74))*d.strength*(2.4+severity*4.6);
+ const sideways=Math.exp(-dist*dist/(2*58*58))*((d.seed-.5)*2.2);
+ dx+=dirx*(swell-dent)+(-diry)*sideways;
+ dy+=diry*(swell-dent)+(dirx)*sideways;
+ }
+ return {dx,dy};
+ });
+}
+
+// 五官定位：優先使用 MediaPipe Face Landmarker；若模型無法載入則使用瀏覽器 FaceDetector。
+// 本機執行推論，從 CDN 只下載程式和模型，不傳送任何照片。
+function setFaceStatus(text){els.faceStatus.textContent=text;}
+function defaultFaceAnchors(){return {nose:{x:400,y:505},leftEye:{x:328,y:427},rightEye:{x:471,y:427},mouth:{x:400,y:575},browY:366,size:210};}
+function faceAnchors(){
+ if(!faceImg)return defaultFaceAnchors();
+ if(detectedFace){const r=photoRect(),convert=p=>({x:r.x+p.x*r.w,y:r.y+p.y*r.h});
+  const f=detectedFace;return {nose:convert(f.nose),leftEye:convert(f.leftEye),rightEye:convert(f.rightEye),mouth:convert(f.mouth),browY:r.y+f.browY*r.h,size:Math.max(35,Math.min(r.w,r.h)*f.size)};}
+ const r=photoRect(),base=Math.min(r.w,r.h),nx=clamp(nosePoint.x,r.x+base*.15,r.x+r.w-base*.15),ny=clamp(nosePoint.y,r.y+base*.2,r.y+r.h-base*.2);
+ return {nose:{x:nx,y:ny},leftEye:{x:nx-base*.14,y:ny-base*.12},rightEye:{x:nx+base*.14,y:ny-base*.12},mouth:{x:nx,y:ny+base*.17},browY:ny-base*.2,size:base*.26};
+}
+function normalizePoint(p,img){return {x:clamp(p.x/img.width,0,1),y:clamp(p.y/img.height,0,1)};}
+function meanPoints(points,ids){return {x:ids.reduce((sum,i)=>sum+points[i].x,0)/ids.length,y:ids.reduce((sum,i)=>sum+points[i].y,0)/ids.length};}
+function applyFaceLandmarks(points){
+ if(!points||points.length<400)return false;
+ const eyes=[meanPoints(points,[33,133,159,145]),meanPoints(points,[362,263,386,374])].sort((a,b)=>a.x-b.x);
+ const nose=meanPoints(points,[1,4,5]),mouth=meanPoints(points,[13,14,61,291]);
+ const faceWidth=Math.abs(points[454].x-points[234].x),faceHeight=Math.abs(points[152].y-points[10].y);
+ const brow=meanPoints(points,[70,63,105,300,293,334]);
+ detectedFace={nose,leftEye:eyes[0],rightEye:eyes[1],mouth,browY:brow.y,size:clamp(Math.min(faceWidth*.55,faceHeight*.48),.08,.55)};
+ const a=faceAnchors();nosePoint={...a.nose};return true;
+}
+function landmarksFromDetector(box,img){
+ // 原生 FaceDetector 的回傳格式未必包含五官點，因此此路徑是臉框比例估計。
+ const x=box.x/img.width,y=box.y/img.height,w=box.width/img.width,h=box.height/img.height;
+ detectedFace={nose:{x:x+w*.50,y:y+h*.56},leftEye:{x:x+w*.34,y:y+h*.40},rightEye:{x:x+w*.66,y:y+h*.40},mouth:{x:x+w*.50,y:y+h*.75},browY:y+h*.30,size:clamp(Math.min(w*.55,h*.48),.08,.55)};
+ nosePoint={...faceAnchors().nose};
+}
+async function ensureFaceModel(){
+ if(faceModel)return faceModel;
+ if(!modelPromise)modelPromise=(async()=>{
+  const {FaceLandmarker,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+  const fileset=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
+  return FaceLandmarker.createFromOptions(fileset,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:1});
+ })().catch(err=>{modelPromise=null;throw err;});
+ faceModel=await modelPromise;return faceModel;
+}
+async function detectUploadedFace(img,sequence){
+ setFaceStatus('⏳ 正在自動校正五官位置…');
+ try{
+  const model=await ensureFaceModel();if(sequence!==faceLoadSeq)return;
+  const result=model.detect(img);if(sequence!==faceLoadSeq)return;
+  if(result.faceLandmarks&&result.faceLandmarks.length&&applyFaceLandmarks(result.faceLandmarks[0])){
+   setFaceStatus('✅ 已自動校正：雙眼、眉毛、鼻子、嘴巴');els.hint.textContent='五官校正完成！開始互動';els.hint.style.opacity='1';return;
+  }
+  setFaceStatus('⚠️ 照片未偵測到完整人臉，請使用清晰正面照片，或手動指定鼻子位置');return;
+ }catch(err){console.warn('Face landmarks unavailable; fallback to native detector',err);}
+ if(sequence!==faceLoadSeq)return;
+ try{
+  if('FaceDetector' in window){const fd=new FaceDetector({fastMode:false,maxDetectedFaces:1});const result=await fd.detect(img);if(sequence!==faceLoadSeq)return;
+   if(result.length){landmarksFromDetector(result[0].boundingBox,img);setFaceStatus('✅ 已偵測臉框並估算五官（可手動校正鼻子）');return;}}
+ }catch(err){console.warn('FaceDetector unavailable',err);}
+ if(sequence===faceLoadSeq)setFaceStatus('⚠️ 此瀏覽器目前無法自動辨識五官；請連上網路重傳照片，或手動指定鼻子位置');
+}
+function drawExpressionOverlay(t){
+ const pain=clamp(injuryHits/30,0,1),recent=Math.exp(-Math.max(0,t-lastHit)/430);
+ if(pain<.05&&recent<.08)return;
+ const a=faceAnchors();ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+ if(injuryHits>=4){
+  for(const eye of [a.leftEye,a.rightEye]){
+   const bruise=ctx.createRadialGradient(eye.x,eye.y,1,eye.x,eye.y,a.size*.38);
+   bruise.addColorStop(0,`rgba(63,31,83,${.18+pain*.18})`);bruise.addColorStop(.58,`rgba(123,64,118,${.16+pain*.14})`);bruise.addColorStop(1,'rgba(123,64,118,0)');
+   ctx.fillStyle=bruise;ctx.beginPath();ctx.ellipse(eye.x,eye.y+a.size*.04,a.size*.28,a.size*.18,0,0,Math.PI*2);ctx.fill();
+  }
+ }
+ if(injuryHits>=10){ctx.globalAlpha=.12+.12*pain;ctx.fillStyle='#3e2042';ctx.beginPath();ctx.ellipse(a.mouth.x,a.mouth.y-a.size*.28,a.size*.92,a.size*.98,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+ const browLift=recent*a.size*.06;
+ ctx.strokeStyle=`rgba(26,12,20,${.38+pain*.45})`;ctx.lineWidth=5+pain*4;
+ ctx.beginPath();ctx.moveTo(a.leftEye.x-a.size*.22,a.browY+browLift);ctx.quadraticCurveTo(a.leftEye.x-a.size*.02,a.browY-a.size*.11-browLift,a.leftEye.x+a.size*.19,a.browY-a.size*.02);
+ ctx.moveTo(a.rightEye.x-a.size*.19,a.browY-a.size*.02);ctx.quadraticCurveTo(a.rightEye.x+a.size*.01,a.browY-a.size*.11-browLift,a.rightEye.x+a.size*.22,a.browY+browLift);
+ ctx.stroke();
+ ctx.strokeStyle=`rgba(28,10,18,${.42+pain*.4})`;ctx.lineWidth=4+pain*3.5;
+ const squint=.2+pain*.25+recent*.4;
+ for(const eye of [a.leftEye,a.rightEye]){ctx.beginPath();ctx.moveTo(eye.x-a.size*.16,eye.y+squint*a.size*.05);ctx.quadraticCurveTo(eye.x,eye.y+a.size*(.11+squint*.28),eye.x+a.size*.16,eye.y-squint*a.size*.03);ctx.stroke();}
+ ctx.strokeStyle=`rgba(255,255,255,${.12+recent*.22})`;ctx.lineWidth=1.8;
+ for(const eye of [a.leftEye,a.rightEye]){ctx.beginPath();ctx.moveTo(eye.x-a.size*.11,eye.y+a.size*.015);ctx.quadraticCurveTo(eye.x,eye.y+a.size*(.045+recent*.03),eye.x+a.size*.11,eye.y);ctx.stroke();}
+ const scream=recent>.24&&injuryHits>=2;const mouthOpen=.18+pain*.22+recent*.23;ctx.save();ctx.translate(a.mouth.x,a.mouth.y+a.size*.04);
+ if(injuryHits<7&&!scream){ctx.strokeStyle='rgba(89,31,45,.78)';ctx.lineWidth=4+pain*2.2;ctx.beginPath();ctx.moveTo(-a.size*.2,0);ctx.quadraticCurveTo(-a.size*.08,a.size*.1,0,-a.size*.02);ctx.quadraticCurveTo(a.size*.08,a.size*.11,a.size*.2,0);ctx.stroke();}
+ else {ctx.fillStyle=`rgba(96,26,39,${.55+pain*.22})`;ctx.beginPath();ctx.ellipse(0,a.size*.03,a.size*(scream?.21:.14+mouthOpen*.12),a.size*(scream?.26:.05+mouthOpen*.14),0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(36,7,14,.8)';ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle='rgba(255,241,241,.55)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-a.size*.09,-a.size*.02);ctx.lineTo(a.size*.09,-a.size*.02);ctx.stroke();}
+ ctx.restore();
+ // 連擊後哭泣、眼淚；顏色與位置為卡通特效，不是人臉辨識。
+ if(injuryHits>=9){
+  const tearStrength=clamp((injuryHits-8)/15,0,1);
+  for(const [i,eye] of [a.leftEye,a.rightEye].entries()){
+   const sway=Math.sin(t*.003+i)*a.size*.018;
+   const startY=eye.y+a.size*.13, endY=startY+a.size*(.14+.28*tearStrength);
+   ctx.save();ctx.globalAlpha=.55+.35*tearStrength;
+   ctx.strokeStyle='#9fe7ff';ctx.lineWidth=3+tearStrength*4;ctx.beginPath();ctx.moveTo(eye.x+sway,startY);
+   ctx.bezierCurveTo(eye.x+a.size*.07+sway,startY+a.size*.09,eye.x-a.size*.025+sway,endY-a.size*.03,eye.x+sway,endY);ctx.stroke();
+   ctx.fillStyle='#a6edff';ctx.beginPath();ctx.ellipse(eye.x+sway,endY,4+tearStrength*3,8+tearStrength*5,-.16,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+ }
+ if(recent>.16){
+  ctx.strokeStyle=`rgba(173,37,54,${.32+recent*.45})`;ctx.lineWidth=3.4;
+  const fx=a.rightEye.x+a.size*.36,fy=a.browY-a.size*.08;
+  ctx.beginPath();ctx.moveTo(fx-a.size*.05,fy);ctx.lineTo(fx,fy-a.size*.08);ctx.lineTo(fx+a.size*.03,fy-a.size*.02);ctx.moveTo(fx-a.size*.01,fy-a.size*.02);ctx.lineTo(fx+a.size*.07,fy-a.size*.1);ctx.moveTo(fx+a.size*.005,fy+a.size*.025);ctx.lineTo(fx+a.size*.095,fy-.01*a.size);ctx.stroke();
+ }
+ ctx.restore();
 }
 // 親親改為持續保留的雙唇口紅印：以 Canvas 路徑繪製，不需要網路素材。
 function drawLipPrints(){
@@ -100,7 +206,35 @@ function drawLipPrints(){
 function drawInjuries(){const severe=clamp(injuryHits/30,0,1);ctx.save();for(const d of injuries){const {x,y,size,kind}=d;ctx.save();ctx.translate(x,y);ctx.rotate((d.seed-.5)*.6);if(kind==='fire'){const g=ctx.createRadialGradient(0,0,3,0,0,size*1.5);g.addColorStop(0,'#4c243c86');g.addColorStop(.55,'#9d4d3560');g.addColorStop(1,'#af553000');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,size*1.6,size*1.3,0,0,Math.PI*2);ctx.fill()}else if(kind==='needle'){ctx.strokeStyle='rgba(100,25,61,.7)';ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(-size*.42,-size*.4);ctx.lineTo(size*.32,size*.3);ctx.stroke();ctx.fillStyle='#8b32527a';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill()}else{const g=ctx.createRadialGradient(0,0,0,0,0,size*1.45);g.addColorStop(0,kind==='ice'?'#a7ddff42':'#7a295c9c');g.addColorStop(.52,kind==='ice'?'#74a4cc21':'#bc4f7b78');g.addColorStop(1,'#be565000');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,size*1.35,size*.95,0,0,Math.PI*2);ctx.fill();if(kind==='bat'||kind==='hammer'||(d.seed>.65&&injuryHits>8)){ctx.strokeStyle='rgba(89,22,49,.50)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-size*.54,-size*.15);ctx.quadraticCurveTo(0,size*.14,size*.43,-size*.08);ctx.stroke()}}ctx.restore()}
 if(injuryHits>=12){const x=nosePoint.x,y=nosePoint.y;const amount=clamp((injuryHits-11)/20,0,1);ctx.save();ctx.lineCap='round';ctx.strokeStyle=`rgba(145,29,54,${.70+amount*.24})`;ctx.lineWidth=4+amount*5;ctx.beginPath();ctx.moveTo(x-7,y+12);ctx.bezierCurveTo(x-12,y+23,x+1,y+36,x-5,y+44+amount*59);ctx.stroke();if(injuryHits>=20){ctx.beginPath();ctx.moveTo(x+11,y+11);ctx.bezierCurveTo(x+19,y+30,x+9,y+49,x+15,y+57+amount*49);ctx.stroke()}ctx.restore()}
 if(injuryHits>=22){ctx.save();ctx.globalAlpha=.14*severe;ctx.fillStyle='#a34065';ctx.beginPath();ctx.ellipse(W*.5,H*.48,W*.27,H*.26,0,0,Math.PI*2);ctx.fill();ctx.restore()}ctx.restore()}
-function impact(x,y){const id=weapon[2],now=performance.now();if(id==='kiss'){lipPrints.push({x,y,angle:rnd(-.3,.3),scale:rnd(.83,1.15),shade:Math.floor(rnd(0,3))});if(lipPrints.length>100)lipPrints.shift()}addInjury(x,y,id);combo=now-lastHit<1800?combo+1:1;lastHit=now;best=Math.max(combo,best);hits++;els.hits.textContent=hits;els.best.textContent=best;els.combo.textContent=`COMBO × ${combo}`;els.hint.style.opacity='0';sound(id);const p=id==='bat'||id==='hammer'?2.1:id==='needle'||id==='tickle'?.55:id==='fire'?1.25:1.5;if(id!=='kiss')deforms.push({x,y,radius:id==='needle'?48:125,power:p*8,vx:rnd(-7,7),vy:rnd(-12,-3),life:1,max:1});if(deforms.length>9)deforms.shift();if(id!=='kiss')shake=Math.min(20,shake+5*p);
+
+function drawWeaponInjuryDetails(){
+ for(const d of injuries){
+  ctx.save();ctx.translate(d.x,d.y);ctx.rotate((d.seed-.5)*.8);
+  if(d.kind==='bat'||d.kind==='hammer'){
+   // 鈍擊後持續存在的立體腫包：外圈泛紅、內圈亮面、下緣暗部。
+   const r=d.size*.85;const bump=ctx.createRadialGradient(-r*.25,-r*.28,2,0,0,r*1.6);
+   bump.addColorStop(0,'rgba(255,186,164,.47)');bump.addColorStop(.48,'rgba(190,84,103,.43)');bump.addColorStop(.82,'rgba(74,32,91,.42)');bump.addColorStop(1,'rgba(74,32,91,0)');
+   ctx.fillStyle=bump;ctx.beginPath();ctx.ellipse(0,0,r*1.5,r*1.05,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='rgba(249,201,190,.36)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(-r*.22,-r*.12,r*.55,Math.PI*1.06,Math.PI*1.77);ctx.stroke();
+  }else if(d.kind==='fire'){
+   ctx.fillStyle='rgba(43,30,35,.47)';ctx.beginPath();ctx.ellipse(0,0,d.size*.64,d.size*.55,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='rgba(244,147,74,.43)';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,d.size*.74,d.size*.65,0,0,Math.PI*2);ctx.stroke();
+   for(let i=0;i<5;i++){const angle=i*1.256+d.seed*3;ctx.fillStyle='rgba(46,27,31,.56)';ctx.beginPath();ctx.arc(Math.cos(angle)*d.size*.45,Math.sin(angle)*d.size*.3,2+d.size*.045,0,Math.PI*2);ctx.fill()}
+  }else if(d.kind==='needle'){
+   ctx.fillStyle='rgba(136,22,60,.84)';ctx.beginPath();ctx.arc(0,0,Math.max(3,d.size*.2),0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='rgba(231,112,131,.65)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,d.size*.49,-1.2,1.6);ctx.stroke();
+  }
+  ctx.restore();
+ }
+}
+function currentRecoil(t){
+ if(!recoil)return {angle:0,dx:0,dy:0};
+ const k=clamp((t-recoil.start)/650,0,1);
+ if(k>=1){recoil=null;return {angle:0,dx:0,dy:0}}
+ const bounce=Math.sin(Math.PI*k)*Math.exp(-2.1*k);
+ return {angle:recoil.side*bounce*.14,dx:recoil.side*bounce*19,dy:-bounce*23};
+}
+function impact(x,y){const id=weapon[2],now=performance.now();if(id==='kiss'){lipPrints.push({x,y,angle:rnd(-.3,.3),scale:rnd(.83,1.15),shade:Math.floor(rnd(0,3))});if(lipPrints.length>100)lipPrints.shift()}addInjury(x,y,id);if(!['kiss','tickle'].includes(id))recoil={side:x<W/2?1:-1,start:now};combo=now-lastHit<1800?combo+1:1;lastHit=now;best=Math.max(combo,best);hits++;els.hits.textContent=hits;els.best.textContent=best;els.combo.textContent=`COMBO × ${combo}`;els.hint.style.opacity='0';sound(id);const p=id==='bat'||id==='hammer'?2.1:id==='needle'||id==='tickle'?.55:id==='fire'?1.25:1.5;if(id!=='kiss')deforms.push({x,y,radius:id==='needle'?48:125,power:p*8,vx:rnd(-7,7),vy:rnd(-12,-3),life:1,max:1});if(deforms.length>9)deforms.shift();if(id!=='kiss')shake=Math.min(20,shake+5*p);
 const color=id==='fire'?'#ff9e3b':id==='ice'?'#a9edff':id==='water'?'#51c6ff':id==='zap'?'#f4eb5e':id==='kiss'?'#ff75b5':'#ffe27a';const count=id==='fire'?38:26;for(let i=0;i<count;i++){let a=rnd(0,Math.PI*2),spd=rnd(2,12);particles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-(id==='fire'?5:0),life:rnd(25,54),max:54,size:rnd(3,13),color,kind:id})}if(particles.length>360)particles.splice(0,particles.length-360);
 waves.push({x,y,r:12,life:24,max:24,color});const txt={punch:'砰！',needle:'哎唷！',bat:'BONK!',fire:'燒燒燒！',hammer:'咚！',pie:'糊你一臉！',water:'嘩啦！',zap:'滋滋！',tickle:'哈哈哈！',kiss:'啵！💋',ice:'冰冰！',wind:'呼～～！'}[id];marks.push({x:clamp(x,130,660),y:clamp(y-54,80,750),txt,life:65,max:65,color,kind:id});if(marks.length>16)marks.shift()}
 
@@ -135,12 +269,42 @@ function drawAttacks(dt){
 function drawFX(dt){for(const w of waves){ctx.beginPath();ctx.arc(w.x,w.y,w.r,0,Math.PI*2);ctx.strokeStyle=w.color;ctx.globalAlpha=w.life/w.max*.8;ctx.lineWidth=7;ctx.stroke();w.r+=6*dt;w.life-=dt}ctx.globalAlpha=1;waves=waves.filter(w=>w.life>0);
 for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.kind==='fire'?-.08:.3)*dt;p.vx*=.98;p.life-=dt;ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();if(p.kind==='fire'){ctx.ellipse(p.x,p.y,p.size*.6,p.size*1.4,-.25,0,Math.PI*2)}else{ctx.arc(p.x,p.y,p.size,0,Math.PI*2)}ctx.fill()}ctx.globalAlpha=1;particles=particles.filter(p=>p.life>0);
 for(const m of marks){m.life-=dt;m.y-=.55*dt;const v=clamp(m.life/m.max,0,1);ctx.save();ctx.translate(m.x,m.y);ctx.rotate(Math.sin(m.life*.22)*.05);ctx.globalAlpha=Math.min(1,v*2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 46px "STSong-Light",sans-serif';ctx.lineWidth=11;ctx.strokeStyle='#10152a';ctx.strokeText(m.txt,0,0);ctx.fillStyle=m.color;ctx.fillText(m.txt,0,0);ctx.restore()}marks=marks.filter(m=>m.life>0)}
-function draw(t){const dt=clamp((t-lastFrame)/16.67||1,.1,2);lastFrame=t;ctx.save();const sx=rnd(-shake,shake),sy=rnd(-shake,shake);ctx.translate(sx,sy);if(injuries.length)permanentWarp();else if(deforms.length)deformed();else imageBase();drawInjuries();drawLipPrints();ctx.fillStyle='#10152a55';ctx.fillRect(0,H-100,W,100);ctx.font='bold 23px "STSong-Light",sans-serif';ctx.textAlign='center';ctx.fillStyle='#eef2ff';ctx.fillText('放輕鬆，這只是遊戲 😎',W/2,H-38);drawFX(dt);drawAttacks(dt);ctx.restore();shake*=Math.pow(.78,dt);deforms.forEach(d=>d.life-=.055*dt);deforms=deforms.filter(d=>d.life>0);if(combo>0&&t-lastHit>1800){combo=0;els.combo.textContent='COMBO × 0'}raf=requestAnimationFrame(draw)}
-c.addEventListener('pointerdown',e=>{const r=c.getBoundingClientRect();const x=clamp((e.clientX-r.left)*W/r.width,0,W),y=clamp((e.clientY-r.top)*H/r.height,0,H);if(nosePick){nosePoint={x,y};nosePick=false;els.nose.textContent='👃 指定鼻子位置';els.hint.textContent='鼻子位置已設定！繼續遊戲';els.hint.style.opacity='1';return}launchAttack(x,y)});
-async function loadFile(file){if(!file)return;if(!file.type.startsWith('image/')){alert('請選擇圖片檔案');return}if(file.size>25*1024*1024){alert('圖片太大，請使用 25MB 以下的照片');return}const url=URL.createObjectURL(file);try{const img=new Image();img.src=url;await img.decode();if(img.width<50||img.height<50)throw Error('解析度太小');const out=document.createElement('canvas');const sc=Math.min(1,1600/Math.max(img.width,img.height));out.width=Math.round(img.width*sc);out.height=Math.round(img.height*sc);out.getContext('2d').drawImage(img,0,0,out.width,out.height);faceImg=out;clearEffects();els.hint.textContent='照片已等比例載入（不變形、不裁臉），點擊人物開始遊戲 😜';els.hint.style.opacity='1'}catch(e){alert('無法讀取照片，請換另一張 JPG、PNG 或 HEIC 照片')}finally{URL.revokeObjectURL(url)}}
+function draw(t){
+ const dt=clamp((t-lastFrame)/16.67||1,.1,2);lastFrame=t;
+ ctx.save();ctx.translate(rnd(-shake,shake),rnd(-shake,shake));
+ const move=currentRecoil(t);ctx.translate(W/2+move.dx,H/2+move.dy);ctx.rotate(move.angle);ctx.translate(-W/2,-H/2);
+ if(injuries.length)permanentWarp();else if(deforms.length)deformed();else imageBase();
+ drawInjuries();drawWeaponInjuryDetails();drawExpressionOverlay(t);drawLipPrints();
+ ctx.restore();
+ ctx.save();ctx.fillStyle='#10152a55';ctx.fillRect(0,H-100,W,100);
+ ctx.font='bold 23px "STSong-Light",sans-serif';ctx.textAlign='center';ctx.fillStyle='#eef2ff';ctx.fillText('放輕鬆，這只是遊戲 😎',W/2,H-38);
+ drawFX(dt);drawAttacks(dt);ctx.restore();
+ shake*=Math.pow(.78,dt);deforms.forEach(d=>d.life-=.055*dt);deforms=deforms.filter(d=>d.life>0);
+ if(combo>0&&t-lastHit>1800){combo=0;els.combo.textContent='COMBO × 0'}
+ raf=requestAnimationFrame(draw);
+}
+
+c.addEventListener('pointerdown',e=>{const r=c.getBoundingClientRect();const x=clamp((e.clientX-r.left)*W/r.width,0,W),y=clamp((e.clientY-r.top)*H/r.height,0,H);if(nosePick){if(detectedFace&&faceImg){const r=photoRect();detectedFace.nose={x:clamp((x-r.x)/r.w,0,1),y:clamp((y-r.y)/r.h,0,1)};}nosePoint={x,y};nosePick=false;els.nose.textContent='👃 指定鼻子位置';els.hint.textContent='鼻子位置已設定！繼續遊戲';els.hint.style.opacity='1';return}launchAttack(x,y)});
+async function loadFile(file){
+ if(!file)return;
+ if(!file.type.startsWith('image/')){alert('請選擇圖片檔案');return;}
+ if(file.size>25*1024*1024){alert('圖片太大，請使用 25MB 以下的照片');return;}
+ const sequence=++faceLoadSeq,url=URL.createObjectURL(file);
+ try{
+  const img=new Image();img.src=url;await img.decode();if(sequence!==faceLoadSeq)return;
+  if(img.width<50||img.height<50)throw Error('解析度太小');
+  const out=document.createElement('canvas'),sc=Math.min(1,1600/Math.max(img.width,img.height));
+  out.width=Math.round(img.width*sc);out.height=Math.round(img.height*sc);
+  out.getContext('2d').drawImage(img,0,0,out.width,out.height);
+  faceImg=out;detectedFace=null;clearEffects();
+  els.hint.textContent='照片已等比例載入；正在自動校正五官…';els.hint.style.opacity='1';
+  await detectUploadedFace(out,sequence);
+ }catch(e){if(sequence===faceLoadSeq){setFaceStatus('無法讀取照片');alert('無法讀取照片，請換另一張 JPG、PNG 或相容的 HEIC 照片');}}
+ finally{URL.revokeObjectURL(url);}
+}
 for(const id of ['camera','gallery'])document.getElementById(id).addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='' });
-function clearEffects(){attacks=[];injuries=[];lipPrints=[];injuryHits=0;nosePick=false;nosePoint={x:400,y:505};els.nose.textContent='👃 指定鼻子位置';updateInjury();deforms=[];marks=[];particles=[];waves=[];shake=0;combo=0;els.combo.textContent='COMBO × 0'}
-document.getElementById('reset').addEventListener('click',()=>{clearEffects();els.hint.textContent='已恢復畫面，再來一回合！';els.hint.style.opacity='1'});document.getElementById('demo').addEventListener('click',()=>{faceImg=null;clearEffects();els.hint.textContent='已切換預設卡通人物！';els.hint.style.opacity='1'});document.getElementById('nose').addEventListener('click',()=>{nosePick=!nosePick;els.nose.textContent=nosePick?'❎ 取消定位':'👃 指定鼻子位置';els.hint.textContent=nosePick?'👃 請點一下照片中鼻子的位置':'已取消鼻子定位';els.hint.style.opacity='1'});document.getElementById('clearHits').addEventListener('click',()=>{clearEffects();hits=0;best=0;els.hits.textContent='0';els.best.textContent='0';els.hint.textContent='新回合開始！';els.hint.style.opacity='1'});document.getElementById('sound').addEventListener('click',()=>{soundOn=!soundOn;els.sound.textContent=soundOn?'🔊 音效開':'🔇 音效關'});document.getElementById('save').addEventListener('click',()=>{const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='紓壓遊戲畫面.png';document.body.appendChild(a);a.click();a.remove()});
+function clearEffects(){recoil=null;attacks=[];injuries=[];lipPrints=[];injuryHits=0;nosePick=false;nosePoint={x:400,y:505};els.nose.textContent='👃 指定鼻子位置';updateInjury();deforms=[];marks=[];particles=[];waves=[];shake=0;combo=0;els.combo.textContent='COMBO × 0'}
+document.getElementById('reset').addEventListener('click',()=>{clearEffects();els.hint.textContent='已恢復畫面，再來一回合！';els.hint.style.opacity='1'});document.getElementById('demo').addEventListener('click',()=>{faceLoadSeq++;faceImg=null;detectedFace=null;setFaceStatus('目前使用預設人物');clearEffects();els.hint.textContent='已切換預設卡通人物！';els.hint.style.opacity='1'});document.getElementById('nose').addEventListener('click',()=>{nosePick=!nosePick;els.nose.textContent=nosePick?'❎ 取消定位':'👃 指定鼻子位置';els.hint.textContent=nosePick?'👃 請點一下照片中鼻子的位置':'已取消鼻子定位';els.hint.style.opacity='1'});document.getElementById('clearHits').addEventListener('click',()=>{clearEffects();hits=0;best=0;els.hits.textContent='0';els.best.textContent='0';els.hint.textContent='新回合開始！';els.hint.style.opacity='1'});document.getElementById('sound').addEventListener('click',()=>{soundOn=!soundOn;els.sound.textContent=soundOn?'🔊 音效開':'🔇 音效關'});document.getElementById('save').addEventListener('click',()=>{const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='紓壓遊戲畫面.png';document.body.appendChild(a);a.click();a.remove()});
 updateInjury();raf=requestAnimationFrame(draw);
 })();
 </script></body></html>
